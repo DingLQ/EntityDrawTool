@@ -7,7 +7,8 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
+          "style": "scss",
+          "skipTests": true
         }
       },
       "root": "",
@@ -24,13 +25,21 @@
             "tsConfig": "tsconfig.app.json",
             "aot": false,
             "assets": [
+              {
+                "glob": "**/*",
+                "input": "node_modules/cesium/Build/Cesium",
+                "output": "/assets/cesium"
+              },
               "src/favicon.ico",
               "src/assets"
             ],
             "styles": [
+              "node_modules/cesium/Build/Cesium/Widgets/widgets.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/cesium/Build/Cesium/Cesium.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -124,6 +133,7 @@
           }
         }
       }
-    }},
+    }
+  },
   "defaultProject": "entity-draw-tool"
 }

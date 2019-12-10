@@ -44,3 +44,7 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# 3dTiles 文件排除
+/src/assets/Scene
+/src/assets
