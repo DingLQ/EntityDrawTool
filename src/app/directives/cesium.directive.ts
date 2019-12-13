@@ -1,6 +1,7 @@
 import { Directive, OnInit, ElementRef } from '@angular/core';
 import { EntityControllerService } from '../services/entity-controller.service';
 import { PolygonPrimitive } from "../classes/PolygonPrimitive";
+import { v1 } from 'uuid';
 
 @Directive({
     selector: '[appCesium]'
@@ -14,6 +15,9 @@ export class CesiumDirective implements OnInit {
     // 视图
     viewer;
     entityList;
+    positions = [];
+    pid = 83;
+    entityId;
     location = {
         latitude: 0,
         longitude: 0,
@@ -21,6 +25,7 @@ export class CesiumDirective implements OnInit {
         endPosition: null,
         cartesian: null
     };
+    idList = [];
 
     ngOnInit() {
         // Put initialization code for the Cesium viewer here
@@ -58,7 +63,7 @@ export class CesiumDirective implements OnInit {
         viewer._cesiumWidget._creditContainer.style.display = "none";
         const tileset = new Cesium.Cesium3DTileset({
             // url: process.env.TILESET_URL,
-            url: '/assets/Scene-bl/tileset.json',
+            url: '/assets/Scene-xd/tileset.json',
             maximumMemoryUsage: 2048,
             maximumScreenSpaceError: 1
         });
@@ -80,26 +85,26 @@ export class CesiumDirective implements OnInit {
                 this.el.nativeElement.childNodes[0].style.transform = degrees;
             }
         });
-        // const initPosition = Cesium.Cartesian3.fromElements(
-        //     -2703955.392467108, 4692442.0001306925, 3357716.7911205976
-        // );
-        // let point = this.createPoint(initPosition);
 
     }
-    createEntity() {
+    createEntity(flag) {
         console.log("开始绘制！！");
         // this.drawPolygon();
-        this.drawPolygon((positions) => {
-            const wgs84_positions = [];
-            for (var i = 0; i < positions.length; i++) {
-                var wgs84_point = this.Cartesian3_to_WGS84({
-                    x: positions[i].x,
-                    y: positions[i].y,
-                    z: positions[i].z
-                });
-                wgs84_positions.push(wgs84_point);
-            }
-        });
+        if (flag === 1) {
+            this.drawPolygon((positions) => {
+                const wgs84_positions = [];
+                for (var i = 0; i < positions.length; i++) {
+                    var wgs84_point = this.Cartesian3_to_WGS84({
+                        x: positions[i].x,
+                        y: positions[i].y,
+                        z: positions[i].z
+                    });
+                    wgs84_positions.push(wgs84_point);
+                }
+            });
+        } else {
+
+        }
     }
     drawPolygonTest() {
         const initPosition = Cesium.Cartesian3.fromElements(
@@ -203,28 +208,29 @@ export class CesiumDirective implements OnInit {
     drawPolygon(callback) {
         const _this = this;
         const handler = new Cesium.ScreenSpaceEventHandler(_this.viewer.scene.canvas);
-        const positions = [];
         let poly = undefined;
 
         //鼠标单击画点
         handler.setInputAction((movement) => {
             const cartesian = this.viewer.scene.camera.pickEllipsoid(movement.position, this.viewer.scene.globe.ellipsoid);
-            if (positions.length == 0) {
-                positions.push(cartesian.clone());
+            if (this.positions.length == 0) {
+                this.positions.push(cartesian.clone());
             }
-            positions.push(cartesian);
+            this.positions.push(cartesian);
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
         //鼠标移动
         handler.setInputAction((movement) => {
             const cartesian = this.viewer.scene.camera.pickEllipsoid(movement.endPosition, this.viewer.scene.globe.ellipsoid);
-            if (positions.length >= 2) {
+            if (this.positions.length >= 2) {
                 if (!Cesium.defined(poly)) {
-                    poly = new PolygonPrimitive(positions, this.viewer);
+                    this.entityId = v1();
+                    this.idList.push(this.entityId);
+                    poly = new PolygonPrimitive(this.entityId, this.positions, this.viewer);
                 } else {
                     if (cartesian != undefined) {
-                        positions.pop();
+                        this.positions.pop();
                         cartesian.y += (1 + Math.random());
-                        positions.push(cartesian);
+                        this.positions.push(cartesian);
                     }
                 }
             }
@@ -232,7 +238,21 @@ export class CesiumDirective implements OnInit {
         //鼠标右键单击结束绘制
         handler.setInputAction((movement) => {
             handler.destroy();
-            callback(positions);
+            callback(this.positions);
+            this.entityController.entityList.push({
+                id: this.entityId,
+                iframeId: this.pid,
+                modelType: 6,
+                colorType: 4,
+                status: 1,
+                entityParam: {
+                    positions: this.positions,
+                    extrudedHeight: 20,
+                    alpha: 0.5
+                }
+            });
+            this.positions = [];
+            this.pid += 1;
         }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
     }
     offsetHeightTitleSet(tileset, heightOffset = 0) {
@@ -266,6 +286,14 @@ export class CesiumDirective implements OnInit {
         var lng = Cesium.Math.toDegrees(cartographic.longitude);
         var alt = cartographic.height;
         return { lat: lat, lng: lng, alt: alt };
+    }
+    deleteEntity() {
+        const id = this.idList.pop();
+        // this.viewer.entities.removeById(id);
+        console.log(this.viewer.entities.removeById(id));
+        this.entityController.entityList.pop();
+        this.positions = [];
+        this.pid -= 1;
     }
 }
 

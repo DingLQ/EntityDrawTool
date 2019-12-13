@@ -12,12 +12,21 @@ registerLocaleData(localeZh);
 })
 export class AppComponent {
   @ViewChild(CesiumDirective, {static: false}) map: CesiumDirective;
-  title = 'entity-draw-tool';
+  butttonContent = '开始绘图';
+  flag = 1;
   constructor(private entityController: EntityControllerService) {
 
   }
   test() {
     console.log('测试绘制函数');
-    this.map.createEntity();
+    this.map.createEntity(this.flag);
+    // this.butttonContent = '结束绘图';
+    // this.flag  = this.flag === 1 ? 0 : 1;
+  }
+  delete() {
+      this.map.deleteEntity();
+  }
+  printLog() {
+      console.log(JSON.stringify(this.entityController.entityList));
   }
 }

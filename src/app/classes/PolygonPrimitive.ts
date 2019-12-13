@@ -1,14 +1,17 @@
 export class PolygonPrimitive {
     options: any;
     hierarchy: [];
-    constructor(positions, viewer) {
+    constructor(id, positions, viewer) {
         this.options = {
+            id: id,
             name: '多边形',
             polygon: {
                 hierarchy: [],
                 perPositionHeight: true,
-                extrudedHeight: 20,
-                material: Cesium.Color.RED.withAlpha(0.4)
+                extrudedHeight: 10,
+                material: Cesium.Color.YELLOW.withAlpha(0.4),
+                outline: true,
+                outlineColor: Cesium.Color.RED
             }
         };
         this.hierarchy = positions;
@@ -17,7 +20,6 @@ export class PolygonPrimitive {
     init(viewer) {
         const _update = () => {
             var list = [];
-            console.log(this.hierarchy)
             return new Cesium.PolygonHierarchy(this.hierarchy);
         };
         this.options.polygon.hierarchy = new Cesium.CallbackProperty(_update, false);
