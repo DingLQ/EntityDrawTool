@@ -19,7 +19,6 @@ export class PolygonPrimitive {
     }
     init(viewer) {
         const _update = () => {
-            var list = [];
             return new Cesium.PolygonHierarchy(this.hierarchy);
         };
         this.options.polygon.hierarchy = new Cesium.CallbackProperty(_update, false);

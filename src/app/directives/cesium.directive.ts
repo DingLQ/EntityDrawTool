@@ -26,6 +26,10 @@ export class CesiumDirective implements OnInit {
         cartesian: null
     };
     idList = [];
+    // 测试实体
+    testEntityList = [];
+    // 测试定时器
+    timer = null;
 
     ngOnInit() {
         // Put initialization code for the Cesium viewer here
@@ -62,12 +66,23 @@ export class CesiumDirective implements OnInit {
         this.viewer = viewer;
         viewer._cesiumWidget._creditContainer.style.display = "none";
         const tileset = new Cesium.Cesium3DTileset({
-            // url: process.env.TILESET_URL,
-            url: '/assets/Scene-xd/tileset.json',
+            url: 'http://localhost:8100/yuanqu/part1/tileset.json',
             maximumMemoryUsage: 2048,
-            maximumScreenSpaceError: 1
+            maximumScreenSpaceError: 10
         });
         viewer.scene.primitives.add(tileset);
+        const tileset2 = new Cesium.Cesium3DTileset({
+            url: 'http://localhost:8100/yuanqu/part2/tileset.json',
+            maximumMemoryUsage: 2048,
+            maximumScreenSpaceError: 10
+        });
+        viewer.scene.primitives.add(tileset2);
+        const tileset3 = new Cesium.Cesium3DTileset({
+            url: 'http://localhost:8100/yuanqu/part3/tileset.json',
+            maximumMemoryUsage: 2048,
+            maximumScreenSpaceError: 10
+        });
+        viewer.scene.primitives.add(tileset3);
         viewer.flyTo(tileset, {
             duration: 3,
             offset: new Cesium.HeadingPitchRange(
@@ -76,7 +91,7 @@ export class CesiumDirective implements OnInit {
                 700
             )
         })
-        this.offsetHeightTitleSet(tileset, -15);
+        this.offsetHeightTitleSet(tileset, -8);
         viewer.scene.postRender.addEventListener(() => {
             let heading = this.viewer.scene.camera.heading;
             let x = -Cesium.Math.toDegrees(heading);
@@ -85,7 +100,7 @@ export class CesiumDirective implements OnInit {
                 this.el.nativeElement.childNodes[0].style.transform = degrees;
             }
         });
-
+        this.initEntity(this.viewer);
     }
     createEntity(flag) {
         console.log("开始绘制！！");
@@ -229,7 +244,7 @@ export class CesiumDirective implements OnInit {
                 } else {
                     if (cartesian != undefined) {
                         this.positions.pop();
-                        cartesian.y += (1 + Math.random());
+                        // cartesian.y += (1 + Math.random());
                         this.positions.push(cartesian);
                     }
                 }
@@ -294,6 +309,152 @@ export class CesiumDirective implements OnInit {
         this.entityController.entityList.pop();
         this.positions = [];
         this.pid -= 1;
+    }
+    // 初始化数据
+    initEntity(viewer) {
+        this.entityController.entityList.forEach(item => {
+            const options = {
+                id: 'test',
+                name: '多边形',
+                polygon: {
+                    hierarchy: new Cesium.PolygonHierarchy(item.entityParam.positions),
+                    extrudedHeight: 4,
+                    material: Cesium.Color.YELLOW.withAlpha(0.4),
+                    outline: true,
+                    outlineColor: Cesium.Color.RED
+                }
+            }
+            const entity = viewer.entities.add(options);
+            this.drawShapeLabel(entity, {
+                id: '1111',
+                name: '楼层一',
+                x: 0,
+                y: 0,
+                z: 0
+            }, viewer);
+            this.testEntityList.push(entity);
+            const options2 = {
+                id: 'test2',
+                name: '多边形',
+                polygon: {
+                    hierarchy: new Cesium.PolygonHierarchy(item.entityParam.positions),
+                    height: 4,
+                    extrudedHeight: 8,
+                    material: Cesium.Color.BLUE.withAlpha(0.4),
+                    outline: true,
+                    outlineColor: Cesium.Color.RED
+                }
+            }
+            const entity2 = viewer.entities.add(options2);
+            this.drawShapeLabel(entity2, {
+                id: '11121',
+                name: '楼层二',
+                x: 0,
+                y: 5,
+                z: -10
+            }, viewer);
+            this.testEntityList.push(entity2);
+            const options3 = {
+                id: 'test3',
+                name: '多边形',
+                polygon: {
+                    hierarchy: new Cesium.PolygonHierarchy(item.entityParam.positions),
+                    height: 8,
+                    extrudedHeight: 14.2,
+                    material: Cesium.Color.RED.withAlpha(0.4),
+                    outline: true,
+                    outlineColor: Cesium.Color.RED
+                },
+                label: {
+                    text: '三楼',
+                    font: "14px SimHei ",
+                    Width: 3,
+                    style: Cesium.LabelStyle.FILL,
+                    fillColor: Cesium.Color.WHITE,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.6),
+                    showBackground: true,
+                    outlineColor: Cesium.Color.WHITE,
+                    pixelOffset: new Cesium.Cartesian2(0, -10),
+                    eyeOffset: new Cesium.Cartesian3(0, 5, 0),
+                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                    verticalOrigin: Cesium.VerticalOrigin.TOP,
+                    scaleByDistance: new Cesium.NearFarScalar(100, 1, 1000, 0.8),
+                    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 3000),
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                }
+            }
+            this.drawShapeLabel(entity2, {
+                id: '111221',
+                name: '楼层三',
+                x: 0,
+                y: 10,
+                z: -10
+            }, viewer);
+            const entity3 = viewer.entities.add(options3);
+            this.testEntityList.push(entity3);
+        });
+    }
+    flicker(tag) {
+        if (tag) {
+            const entity = this.testEntityList[0];
+            let flag = true;
+            let x = 1;
+            // this.timer = setInterval(() => {
+            //     if (flag) {
+            //         entity.polygon.material = Cesium.Color.RED.withAlpha(0.9);
+            //         flag = false;
+            //     } else {
+            //         entity.polygon.material = Cesium.Color.YELLOW.withAlpha(0.4)
+            //         flag = true;
+            //     }
+            // }, 900);
+            entity.polygon.material = new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty(() => {
+                if (flag) {
+                    x = x - 0.05;
+                    if (x <= 0.3) {
+                        flag = false;
+                    }
+                } else {
+                    x = x + 0.05;
+                    if (x >= 1) {
+                        flag = true;
+                    }
+                }
+                return Cesium.Color.YELLOW.withAlpha(x);
+            }, false))
+        } else {
+            const entity = this.testEntityList[0];
+            // clearInterval(this.timer);
+            entity.polygon.material = Cesium.Color.YELLOW.withAlpha(0.4)
+            // this.timer = null;
+        }
+    }
+    drawShapeLabel(shape, params, cesiumViewer) {
+        const polyPositions = shape.polygon.hierarchy.getValue(Cesium.JulianDate.now()).positions;
+        let polyCenter = Cesium.BoundingSphere.fromPoints(polyPositions).center;
+        polyCenter = Cesium.Ellipsoid.WGS84.scaleToGeodeticSurface(polyCenter);
+        let labelEntity = cesiumViewer.entities.add({
+            position: polyCenter,
+            polygonId:  params.id,
+            label: {
+                font: '11px sans-serif',
+                text: params.name,
+                fillColor: Cesium.Color.WHITE,
+                backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                showBackground: true,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 1,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                // pixelOffset:new Cesium.Cartesian3(0, -100),
+                eyeOffset: new Cesium.Cartesian3(params.x, params.y, params.z),
+                scaleByDistance: new Cesium.NearFarScalar(100, 1.5, 1000, 0.8),
+                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 1500),
+                // 解决label被遮挡问题，将label置顶
+                disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                show:  true
+            }
+        });
+        return labelEntity
     }
 }
 
